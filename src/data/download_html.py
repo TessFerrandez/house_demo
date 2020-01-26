@@ -1,18 +1,21 @@
+import os
 import requests
+from dotenv import find_dotenv, load_dotenv
 
 
-def download_file(page: int, save_path: str = 'data/raw'):
+def download_file(base_url: str, page: int, save_path: str = "data/raw"):
     page_str = str(page)
-    base_url = "https://www.hemnet.se/salda/bostader?item_types%5B%5D=villa&item_types%5B%5D=radhus&location_ids%5B%5D=18027&sold_age=all&page="
     content = requests.get(base_url + page_str).content
-    with open(f'{save_path}/{page_str}.html', 'w') as f:
+    with open(f"{save_path}/{page_str}.html", "w") as f:
         f.write(str(content))
 
 
 def main():
+    base_url = os.environ.get("BASE_URL")
     for i in range(1, 70):
-        download_file(i)
+        download_file(base_url, i)
 
 
 if __name__ == "__main__":
+    load_dotenv(find_dotenv())
     main()
