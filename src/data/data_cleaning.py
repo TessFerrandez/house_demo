@@ -4,42 +4,49 @@ from typing import List
 
 
 def known_regions() -> List[str]:
-    return ['VIBY',
-            'NORRVIKEN',
-            'TÖJNAN',
-            'EDSVIKEN',
-            'HELENELUND',
-            'ROTEBRO',
-            'HÄGGVIK',
-            'FÅGELSÅNGEN',
-            'SILVERDAL',
-            'TEGELHAGEN',
-            'TÖRNSKOGEN',
-            'SJÖBERG',
-            'ROTSUNDA',
-            'KÄRRDAL',
-            'TUREBERG',
-            'GILLBO',
-            'EDSÄNGEN',
-            'LANDSNORA',
-            'VAXMORA',
-            'SOLÄNGEN',
-            'VÄSJÖN',
-            'KVARNSKOGEN']
+    """
+    known regions in Sollentuna
+    """
+    return [
+        "VIBY",
+        "NORRVIKEN",
+        "TÖJNAN",
+        "EDSVIKEN",
+        "HELENELUND",
+        "ROTEBRO",
+        "HÄGGVIK",
+        "FÅGELSÅNGEN",
+        "SILVERDAL",
+        "TEGELHAGEN",
+        "TÖRNSKOGEN",
+        "SJÖBERG",
+        "ROTSUNDA",
+        "KÄRRDAL",
+        "TUREBERG",
+        "GILLBO",
+        "EDSÄNGEN",
+        "LANDSNORA",
+        "VAXMORA",
+        "SOLÄNGEN",
+        "VÄSJÖN",
+        "KVARNSKOGEN",
+    ]
 
 
 def known_brokers() -> List[str]:
-    return ['Fastighetsbyrån',
-            'Mäklarhuset',
-            'Bjurfors',
-            'Susanne Persson',
-            'Notar',
-            'Länsförsäkringar',
-            'HusmanHagberg',
-            'Svensk Fastighetsförmedling',
-            'SkandiaMäklarna',
-            'ERA',
-            'Erik Olsson']
+    return [
+        "Fastighetsbyrån",
+        "Mäklarhuset",
+        "Bjurfors",
+        "Susanne Persson",
+        "Notar",
+        "Länsförsäkringar",
+        "HusmanHagberg",
+        "Svensk Fastighetsförmedling",
+        "SkandiaMäklarna",
+        "ERA",
+        "Erik Olsson",
+    ]
 
 
 def clean_region(region: str):
@@ -98,41 +105,47 @@ def clean_broker(broker_name: str) -> str:
     return "Other"
 
 
-def clean_data(input_file: str, output_file: str, cat_output_file: str = 'data/processed/houses_w_cat.csv'):
+def clean_data(
+    input_file: str,
+    output_file: str,
+    cat_output_file: str = "data/processed/houses_w_cat.csv",
+):
     df = pd.read_csv(input_file)
 
     # remove any houses that don't have area set
     df = df[df.area.isnull() == False]
 
     # set missing rooms based on an avg. room size of 25
-    df['rooms'].fillna(df.area / 25.0, inplace=True)
+    df["rooms"].fillna(df.area / 25.0, inplace=True)
 
     # land_area is 0 for condos
-    df['land_area'].fillna(0, inplace=True)
+    df["land_area"].fillna(0, inplace=True)
     df = df[df.land_area < 5000]
-    df['is_condo'] = df.monthly_fee > 0
+    df["is_condo"] = df.monthly_fee > 0
 
     # add a few new features based on old
-    df['total_area'] = df.area + df.sup_area
-    df['price_per_sqm'] = df.price / df.area
-    df['price_per_tsqm'] = df.price / df.total_area
-    df['list_price'] = np.round((df.price * 100 / (100 + df.price_change)) / 1000, 0) * 1000
-    df['price_tkr'] = df.price / 1000
-    df['listprice_tkr'] = df.list_price / 1000
+    df["total_area"] = df.area + df.sup_area
+    df["price_per_sqm"] = df.price / df.area
+    df["price_per_tsqm"] = df.price / df.total_area
+    df["list_price"] = (
+        np.round((df.price * 100 / (100 + df.price_change)) / 1000, 0) * 1000
+    )
+    df["price_tkr"] = df.price / 1000
+    df["listprice_tkr"] = df.list_price / 1000
 
     # clean up the region
-    df['region'].fillna('UNKNOWN', inplace=True)
-    df['region'] = df.apply(lambda row: clean_region(row['region']), axis=1)
+    df["region"].fillna("UNKNOWN", inplace=True)
+    df["region"] = df.apply(lambda row: clean_region(row["region"]), axis=1)
 
     # clean up the brokers
-    df['broker'].fillna('UNKNOWN', inplace=True)
-    df['broker'] = df.apply(lambda row: clean_broker(row['broker']), axis=1)
+    df["broker"].fillna("UNKNOWN", inplace=True)
+    df["broker"] = df.apply(lambda row: clean_broker(row["broker"]), axis=1)
 
     # add more time values
-    df['date_sold'] = pd.to_datetime(df['date_sold'])
-    df['year'] = df['date_sold'].dt.year
-    df['month'] = df['date_sold'].dt.month
-    df['running_month'] = (df['year'] - 2013) * 12 + df['month']
+    df["date_sold"] = pd.to_datetime(df["date_sold"])
+    df["year"] = df["date_sold"].dt.year
+    df["month"] = df["date_sold"].dt.month
+    df["running_month"] = (df["year"] - 2013) * 12 + df["month"]
 
     # clean up crazy price changes
     df = df[df.price_change < 50]
@@ -154,5 +167,4 @@ def clean_data(input_file: str, output_file: str, cat_output_file: str = 'data/p
 
 
 if __name__ == "__main__":
-    clean_data('data/interim/houses.csv',
-               'data/processed/houses.csv')
+    clean_data("data/interim/houses.csv", "data/processed/houses.csv")
